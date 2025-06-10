@@ -209,6 +209,14 @@ class LinkFieldView extends BaseFieldView {
      */
     autocompleteOnEmpty = false
 
+    /**
+     * A link element class name. Applicable in the detail mode.
+     *
+     * @protected
+     * @since 9.1.6
+     */
+    linkClass
+
     /** @inheritDoc */
     events = {
         /** @this LinkFieldView */
@@ -265,6 +273,7 @@ class LinkFieldView extends BaseFieldView {
             iconHtml: iconHtml,
             url: this.getUrl(),
             createButton: createButton,
+            linkClass: this.linkClass,
         };
     }
 
@@ -424,7 +433,7 @@ class LinkFieldView extends BaseFieldView {
             this.model.set({
                 ...attributes,
                 ...(await handler.getAttributes(model)),
-            });
+            }, {fromField: this.name});
         });
     }
 

@@ -53,6 +53,10 @@
             "type": "boolean",
             "description": "Disables remove."
         },
+        "forceListViewSettings": {
+            "type": "boolean",
+            "description": "Force list view settings for non-object entity types. As of v9.2.0."
+        },
         "views": {
             "description": "View classes. Available views: list, detail, edit, listRelated.",
             "type": "object",
@@ -506,6 +510,10 @@
                     "syncWithModel": {
                         "type": "boolean",
                         "description": "Re-fetch records when the parent model is saved or refreshed by WebSocket."
+                    },
+                    "syncBackWithModel": {
+                        "type": "boolean",
+                        "description": "Re-fetch the parent model when the relationship is updated. Ignored if WebSocked is enabled."
                     },
                     "massSelect": {
                         "type": "boolean",
