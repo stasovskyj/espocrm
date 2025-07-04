@@ -33,6 +33,8 @@ import SearchManager from 'search-manager';
 import RecordModal from 'helpers/record-modal';
 import CreateRelatedHelper from 'helpers/record/create-related';
 import SelectRelatedHelper from 'helpers/record/select-related';
+import {inject} from 'di';
+import WebSocketManager from 'web-socket-manager';
 
 /**
  * A relationship panel.
@@ -102,6 +104,16 @@ class RelationshipPanelView extends BottomPanelView {
      * @protected
      */
     listLayoutName
+
+    /**
+     * Also used by the stream panel view.
+     *
+     * @protected
+     * @type {WebSocketManager}
+     * @since 9.2.0
+     */
+    @inject(WebSocketManager)
+    webSocketManager
 
     setup() {
         super.setup();
@@ -821,31 +833,45 @@ class RelationshipPanelView extends BottomPanelView {
      * A `remove-related` action.
      *
      * @protected
+     * @param {{id?: string}} [data]
+     * @return {Promise<void>}
      */
-    actionRemoveRelated(data) {
+    async actionRemoveRelated(data) {
         const id = data.id;
 
-        this.confirm({
+        const model = this.collection.get(id);
+        const index = this.collection.indexOf(model);
+
+        if (!model) {
+            throw new Error("No model.");
+        }
+
+        await this.confirm({
             message: this.translate('removeRecordConfirmation', 'messages'),
             confirmText: this.translate('Remove'),
-        }, () => {
-            const model = this.collection.get(id);
-
-            Espo.Ui.notifyWait();
-
-            model
-                .destroy()
-                .then(() => {
-                    Espo.Ui.success(this.translate('Removed'));
-
-                    this.collection.fetch();
-
-                    this.model.trigger('after:unrelate');
-                    this.model.trigger('after:unrelate:' + this.link);
-
-                    this.processSyncBack();
-                });
         });
+
+        Espo.Ui.notifyWait();
+
+        try {
+            await model.destroy({wait: true});
+        } catch (e) {
+            if (!this.collection.models.includes(model)) {
+                this.collection.add(model, {at: index});
+            }
+
+            return;
+        }
+
+
+        Espo.Ui.success(this.translate('Removed'));
+
+        this.collection.fetch().then(() => {});
+
+        this.model.trigger('after:unrelate');
+        this.model.trigger(`after:unrelate:${this.link}`);
+
+        this.processSyncBack();
     }
 
     // noinspection JSUnusedGlobalSymbols
@@ -895,7 +921,7 @@ class RelationshipPanelView extends BottomPanelView {
      * @protected
      */
     processSyncBack() {
-        if (!this.defs.syncBackWithModel || this.getHelper().webSocketManager) {
+        if (!this.defs.syncBackWithModel || this.webSocketManager.isEnabled()) {
             return;
         }
 

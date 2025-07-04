@@ -521,8 +521,8 @@ class PhoneFieldView extends VarcharFieldView {
         const o = {
             phoneNumber: '',
             primary: !data.length,
-            type: undefined,
-            optOut: this.emailAddressOptedOutByDefault,
+            type: this.defaultType,
+            optOut: this.phoneNumberOptedOutByDefault,
             invalid: false,
         };
 
@@ -875,6 +875,17 @@ class PhoneFieldView extends VarcharFieldView {
                 value: originalValue,
             },
         };
+    }
+
+    focusOnInlineEdit() {
+        /** @type {HTMLElement|null} */
+        const input = this.element.querySelector('input.phone-number');
+
+        if (!input) {
+            return;
+        }
+
+        input.focus({preventScroll: true});
     }
 }
 
